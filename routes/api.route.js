@@ -29,24 +29,42 @@ router.post('/create-event', async (req, res, next) => {
         const {summary, description, location, startDateTime, endDateTime} = req.body
         oauth2Client.setCredentials({refresh_token: process.env.REFRESH_TOKEN})
         const calendar = google.calendar('v3')
+
+        const event = {
+            conferenceData: {
+                createRequest: {
+                    conferenceSolutionKey: {
+                        type: "hangoutsMeet"
+                    },
+                    requestId: (Math.random() + 1).toString(36).substring(7)
+                }
+            },
+            summary,
+            description,
+            location,
+            colorId: '7',
+            start: {
+                dateTime: new Date(startDateTime)
+            },
+            end: {
+                dateTime: new Date(endDateTime)
+            },
+            attendees: [
+                {email: 'elianbraja@gmail.com'},
+            ]
+        }
+
         const response = await calendar.events.insert({
             auth: oauth2Client,
             calendarId: 'primary',
-            requestBody: {
-                summary,
-                description,
-                location,
-                colorId: '7',
-                start: {
-                    dateTime: new Date(startDateTime)
-                },
-                end: {
-                    dateTime: new Date(endDateTime)
-                }
-            }
+            resource: event,
+            conferenceDataVersion: 1,
+            sendNotifications: true
         })
+
         res.send(response)
     } catch (error) {
+        console.log(error)
         next(Error)
     }
 })
