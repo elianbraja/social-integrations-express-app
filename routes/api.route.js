@@ -80,7 +80,15 @@ router.post('/create-tokens-linkedin', async (req, res, next) => {
         const {code} = req.body
         requestAccessToken(code)
             .then((response) => {
-                res.send(response.body)
+                requestProfile(response.body.access_token)
+                    .then(response => {
+                        console.log(response.body)
+                        res.send(response.body);
+                    })
+                    .catch((error) => {
+                        res.status(500).send(`${error}`)
+                        console.error(error)
+                    })
             })
             .catch((error) => {
                 console.error(error)
@@ -100,6 +108,12 @@ function requestAccessToken(code) {
         .send(`client_secret=${process.env.LINKEDIN_CLIENT_SECRET}`)
         .send(`code=${code}`)
         .send(`state=123456`)
+}
+
+function requestProfile(access_token) {
+    console.log(access_token)
+    return request.get('https://api.linkedin.com/v2/me?projection=(id,localizedFirstName,localizedLastName,profilePicture(displayImage~digitalmediaAsset:playableStreams))')
+        .set('Authorization', `Bearer ${access_token}`)
 }
 
 
